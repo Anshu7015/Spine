@@ -14,12 +14,12 @@ export const sendOtp = async (req, res) => {
     // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: "User not found.", success : false });
     }
 
     // Check if already verified
     if (user.isEmailVerified) {
-      return res.status(400).json({ message: "User already verified." });
+      return res.status(400).json({ message: "User already verified.", success : false });
     }
 
     // Delete old OTP if exists (avoid duplicate index errors)
@@ -36,6 +36,7 @@ export const sendOtp = async (req, res) => {
 
     res.status(200).json({
       message: "OTP sent successfully to email.",
+      success : true
       // otp : plainOtp,
     });
   } catch (error) {
@@ -60,7 +61,12 @@ export const verifyOtp = async (req, res) => {
     // Compare OTP with hash
     const isMatch = await bcrypt.compare(otp, otpRecord.otpHash);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid OTP." });
+      return res.status(401).json({ 
+        message: "Invalid Credentials!!.", 
+        error : console.error("Invalid OTP!!"),
+        success : false
+      
+      });
     }
 
     // Update user's verification status
@@ -73,5 +79,6 @@ export const verifyOtp = async (req, res) => {
   } catch (error) {
     console.error("Error verifying OTP:", error);
     res.status(500).json({ message: "Server error." });
+    success : false
   }
 };

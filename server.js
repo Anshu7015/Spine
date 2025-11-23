@@ -20,6 +20,8 @@ app.use("/api/otp", otpRoutes);
 app.use("/",(req,res)=>{
  res.send("Server is running successfully!!");
 });
+
+//Temporary Error Handling Middleware
 // -----------------------------
 // Error handling middleware
 // -----------------------------
