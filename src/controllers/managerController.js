@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
-// 1. Manager Applying and register also
+// 1. Manager Applying and admin will approve
 export const managerApplying = async (req,res) => {
     try {
  

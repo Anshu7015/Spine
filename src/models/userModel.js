@@ -81,12 +81,12 @@ userSchema.pre("save", async function (next) {
 
   try {
     //Find the last userId and increment it
-    //constructor points to the model and this points to the current document
+    //constructor points to the model and "this" points to the current document
     const lastUser = await this.constructor.findOne(
       {},
       {},
       { sort: { userId: -1 } }
-    ); //Sort in descending order to get the last userId
+    ); //Sort in descending order to get the last userId, -1 means des and 1 means asc
     const lastId = lastUser ? parseInt(lastUser.userId.replace("UID", "")) : 0;
     this.userId = `UID${String(lastId + 1).padStart(3, "0")}`;
     next();

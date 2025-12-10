@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const slotSchema = new mongoose.Schema(
   {
-    roomId: { type: String, unique: true ,required : true },
-    roomPassword: { type: String, required: true },
-    matchType: { type: String, required: true },
-    manager: { type: mongoose.Types.ObjectId, ref: "Manager", required: true },
+    roomId: { type: String },
+    roomPassword: { type: String },
+    gameType: { type: String, required: true },
+    manager: { type: mongoose.Types.ObjectId, ref: "Manager" },
     teamA: { type: mongoose.Types.ObjectId, ref: "User" },
     teamAStatus: {
       type: String,
@@ -18,6 +18,7 @@ const slotSchema = new mongoose.Schema(
       default: "pending",
       enum: ["paid", "pending"],
     },
+    managerAssigned : {type : Boolean , default : false},
     matchStatus: {
       type: String,
       enum: ["pending", "ready", "running", "completed"],

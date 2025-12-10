@@ -2,7 +2,9 @@ import express from "express";
 import dotenv from "dotenv";
 import mongoAdmin from "./src/config/mongoAdmin.js";
 import userRoutes from "./src/routes/userRoute.js";
-import otpRoutes from "./src/routes/otpRoute.js"
+import otpRoutes from "./src/routes/otpRoute.js";
+import managerRoutes from "./src/routes/managerRoute.js";
+import ffCardRoutes from "./src/routes/ffCardCreationRoute.js";
 
 // Load env variables
 dotenv.config();
@@ -16,6 +18,8 @@ app.use(express.json());
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/otp", otpRoutes);
+app.use("/api/manager", managerRoutes);
+app.use("/api/ffCard", ffCardRoutes);
 
 app.use("/",(req,res)=>{
  res.send("Server is running successfully!!");

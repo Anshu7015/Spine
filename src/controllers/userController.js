@@ -120,13 +120,19 @@ export const loginUser = async (req, res) => {
 
     await user.save();//Saving the JWT tokens.
 
-    const userData = user.toObject();
-    delete userData.userPassword;
+    
+    
 
     // If already verified
     return res.status(200).json({
       message: "Login successful.",
-      userData,
+       user : {
+        userName : user.userName,
+        userId : user.userId,
+        accessToken : user.accessToken,
+        refreshToken : user.refreshToken,
+        status : user.email
+      }
     });
   } catch (error) {
     console.error("Error logging in:", error);
@@ -137,63 +143,139 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// 3. Refresh Access Token
+// 3. Verify User = It will verify the user everytime he opens the app after login process
 
-export const refreshAccessToken = async function (req,res) {
+export const verifyUser = async function (req, res) {
+  try {
+    const { accessToken } = req.body;
+
+    // Check token exists
+    if (!accessToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Access token required!",
+      });
+    }
+
+    // Validate JWT signature + expiry
+    let decoded;
     try {
+      decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired access token!",
+      });
+    }
 
-      const {email,refreshToken} = req.body;
+    // Extract userId from the decoded token
+    const userId = decoded._id;
 
-      if (!refreshToken || !email) {
-        return res.status(401).json({
-          message: "Refresh Token and email required!!"
-        });
-      };
+    // Fetch user from DB
+    const user = await User.findById(userId);
 
-      //Find user by email
-      const user = await User.findOne({email});
-      if (!user) {
-        return res.status(401).json({
-          message : "User not found, check the credentials",
-          error : console.error("Error at RefreshToken function in userController!")
-        });
-      };
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found!",
+      });
+    }
 
-      //Comparing the refreshToken.
-      if (user.refreshToken !== refreshToken) {
-        return res.status(401).json({
-          message : "Refresh token does not match with our records."
-        });
-      }
-     
-      //Verify refreshToken signatures
-      try {
-        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-      } catch (error) {
-        return res.status (401).json({
-          message : "Invalid or expired refresh token!"
-        });
-      }
+    // SINGLE DEVICE LOGIN ENFORCEMENT
+    if (user.accessToken !== accessToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Session expired or logged in from another device.",
+      });
+    }
 
-    // Generate new access token
+    // All good → user is verified
+    return res.status(200).json({
+      success: true,
+      message: "User verified successfully.",
+      user: {
+        userName: user.userName,
+        email: user.email,
+        userId: user.userId,
+        tokenCoins: user.tokenCoins,
+      },
+    });
+  } catch (error) {
+    console.error("Error in verifyUser:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
+
+
+// 4. Refresh Access Token
+export const refreshAccessToken = async function (req, res) {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token required!",
+      });
+    }
+
+    // STEP 1: Verify refresh token signature + expiry
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired refresh token!",
+      });
+    }
+
+    // STEP 2: Extract userId from decoded token
+    const userId = decoded._id;
+
+    // STEP 3: Find user by ID (not email from client)
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found!",
+      });
+    }
+
+    // STEP 4: Ensure the refresh token matches the one stored in DB
+    if (user.refreshToken !== refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token does not match our records.",
+      });
+    }
+
+    // STEP 5: Generate new access token
     const newAccessToken = await user.generateAccessToken();
     user.accessToken = newAccessToken;
     await user.save();
 
+    // STEP 6: Send new accessToken to frontend
     return res.status(200).json({
-      message: "Access token refreshed",
-      email : user.email,
+      success: true,
+      message: "Access token refreshed successfully.",
       accessToken: newAccessToken,
     });
-
-    } catch (error) {
-      return res.status(401).json({
-        message : "Expired or invalid refresh token!!"
-      });
-    }
+  } catch (error) {
+    console.error("Error in refreshAccessToken:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
 };
 
-//4. Logout User
+
+//5. Logout User
 export const logoutUser = async (req, res) => {
   try {
     const { userId } = req.body;
