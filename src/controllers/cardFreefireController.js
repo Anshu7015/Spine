@@ -60,7 +60,7 @@ export const cardCreation = async function(req ,res) {
         return res.status(200).json({
             message : "Successfully created card", 
             success : true,
-            cardDetails : cardData
+            cardDetails : [cardData]
         });
 
 
