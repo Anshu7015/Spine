@@ -3,14 +3,14 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main
+      - dev_Anshu   
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup SSH
@@ -21,10 +21,16 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
-            cd ~/app &&
+            cd ~/Spine &&
             git fetch --all &&
-            git reset --hard origin/main &&
+            git reset --hard origin/dev_Anshu &&
+
+            echo 'Installing dependencies...' &&
             npm ci &&
+
+            echo 'Running build (fake) ...' &&
             npm run build &&
+
+            echo 'Reloading PM2...' &&
             pm2 reload myapp || pm2 start server.js --name myapp
           "
