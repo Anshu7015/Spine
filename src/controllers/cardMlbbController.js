@@ -1,11 +1,11 @@
-//Admin routes only
-import cardFF from "../models/cardFreefire.js";
-import { createFreefireCard } from "../validator/createFreefireCardValidator.js";
+import cardMlbb from "../models/cardMLBB.js";
+import { createMlbbCard } from "../validator/createMlbbCardValidator.js";
 
+//Admin routes only for declaration
 // 1.Card Creation(Backend use only)
 export const cardCreation = async function(req ,res) {
     try {
-        const {error, value} = createFreefireCard.validate(req.body);
+        const {error, value} = createMlbbCard.validate(req.body);
         
         if (error) {
             return res.status(400).json({
@@ -22,14 +22,14 @@ export const cardCreation = async function(req ,res) {
              teamSize,
              totalSquads,
              rounds,
-             prize,
+             price,
              gamePrizeAmount,
              gameType,
              game
 
         } = value;
 
-        const exists = await cardFF.findOne({cardIndex});
+        const exists = await cardMlbb.findOne({cardIndex});
 
         if (exists) {
             return res.status(400).json({
@@ -38,7 +38,7 @@ export const cardCreation = async function(req ,res) {
             })
         };
 
-        const newCard = new cardFF({
+        const newCard = new cardMlbb({
           title,
           subtitle,
           cardIndex,
@@ -46,7 +46,7 @@ export const cardCreation = async function(req ,res) {
           teamSize,
           totalSquads,
           rounds,
-          prize,
+          price,
           gamePrizeAmount,
           gameType,
           game
@@ -71,13 +71,14 @@ export const cardCreation = async function(req ,res) {
     }
 };
 
-// 2. Send all the cards from the freeFire category
-export const getCardsFreeFire = async function(req,res){
+//Public route it will serve to users.
+// 2. Send all the cards from the Mlbb category
+export const getCardsMlbb = async function(req,res){
     try {
-        const cardData = await cardFF.find();
+        const cardData = await cardMlbb.find();
         if (cardData) {
             return res.status(200).json({
-                message : "Successfully fetched all cards for freeFire",
+                message : "Successfully fetched all cards for Mlbb",
                 success : true,
                 cards : cardData
             });

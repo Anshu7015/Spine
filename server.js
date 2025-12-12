@@ -4,7 +4,8 @@ import mongoAdmin from "./src/config/mongoAdmin.js";
 import userRoutes from "./src/routes/userRoute.js";
 import otpRoutes from "./src/routes/otpRoute.js";
 import managerRoutes from "./src/routes/managerRoute.js";
-import ffCardRoutes from "./src/routes/ffCardCreationRoute.js";
+import ffCardRoutes from "./src/routes/ffCardRoutes.js";
+import mlbbCardRoutes from "./src/routes/mlbbCardRoutes.js";
 
 // Load env variables
 dotenv.config();
@@ -20,6 +21,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/otp", otpRoutes);
 app.use("/api/manager", managerRoutes);
 app.use("/api/ffCard", ffCardRoutes);
+app.use("/api/mlbbCard", mlbbCardRoutes);
 
 app.use("/",(req,res)=>{
  res.send("Server is running successfully!!");

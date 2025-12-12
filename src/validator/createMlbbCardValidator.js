@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-export const createFreefireCard = Joi.object({
+export const createMlbbCard = Joi.object({
   title: Joi.string().min(2).required().messages({
     "string.base": "Title must be a valid string.",
     "string.min": "Title must contain at least 2 characters.",
@@ -40,9 +40,9 @@ export const createFreefireCard = Joi.object({
   }),
 
   price: Joi.number().min(20).required().messages({
-    "number.base": "Prize value must be a number.",
-    "number.min": "Prize must be at least 20.",
-    "any.required": "Prize is required.",
+    "number.base": "Price value must be a number.",
+    "number.min": "Price must be at least 20.",
+    "any.required": "Price is required.",
   }),
 
   gamePrizeAmount: Joi.number().required().messages({
@@ -55,5 +55,5 @@ export const createFreefireCard = Joi.object({
     "any.required": "Game type is required.",
   }),
 
-  game : Joi.string().valid("ff")
+  game : Joi.string().valid("mlbb")
 });

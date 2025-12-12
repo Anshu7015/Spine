@@ -11,9 +11,7 @@ const freefireSchema = new mongoose.Schema({
 
   lobbyTime: {type : Number , default : 10},
 
-  minAge: { type: Number, default: 16 },
-
-  teamSize: { type: Number, default: 5 },
+  teamSize: { type: Number, default: 4 },
 
   totalSquads: { type: Number, required: 
   true },
@@ -27,7 +25,7 @@ const freefireSchema = new mongoose.Schema({
   // coinAmount : {type :Number},
   gameType: { type: String, required: true }, // CS, BR
 
-  game: { type: String, enum: ["ff", "mlbb"], default : "ff" }, // We don't need it bcz this card is dedicated to freefire
+  game: { type: String, enum: ["ff",], default : "ff" }, // We don't need it bcz this card is dedicated to freefire
   
 },
 {timestamps : true}
