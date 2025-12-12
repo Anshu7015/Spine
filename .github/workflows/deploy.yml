@@ -9,54 +9,30 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install ssh client and rsync
-        run: sudo apt-get update && sudo apt-get install -y openssh-client rsync
+      - name: Install ssh client
+        run: sudo apt-get update && sudo apt-get install -y openssh-client
 
-      - name: Configure SSH key + known_hosts
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
+      - name: Write PEM key to file
         run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
+          echo "${{ secrets.EC2_SECRETE_KEY }}" > /home/runner/.ssh/id_rsa
+          chmod 600 /home/runner/.ssh/id_rsa
 
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-          cat << 'EOF' > ~/.ssh/config
-Host *
-  IdentitiesOnly yes
-  IdentityFile ~/.ssh/id_rsa
-  StrictHostKeyChecking no
-EOF
-          chmod 600 ~/.ssh/config
-
-          ssh-keyscan -H github.com >> ~/.ssh/known_hosts || true
-          if [ -n "$EC2_HOST" ]; then
-            ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts || true
-          fi
-          chmod 644 ~/.ssh/known_hosts
-
-      - name: Deploy: pull, install deps, build, restart
+      - name: Simple deploy (ssh -> pull, install, reload)
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          set -euo pipefail
           echo "Deploying to ${EC2_USER}@${EC2_HOST}"
-
-          ssh -o BatchMode=yes ${EC2_USER}@${EC2_HOST} << 'REMOTE'
-            set -e
-            cd ~/app || exit 1
-
-            git fetch --all --prune
-            git reset --hard origin/dev_Anshu
-
-            npm ci
-            npm run build || true
-
-            pm2 reload myapp || pm2 start server.js --name myapp
-            pm2 ls
-REMOTE
+          # Use the key we just wrote and skip host key checking for simplicity
+          ssh -i /home/runner/.ssh/id_rsa -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \
+            'set -e
+             cd ~/Spine || exit 1
+             git fetch --all --prune
+             git reset --hard origin/dev_Anshu
+             npm ci
+             npm run build || true
+             pm2 reload myapp || pm2 start server.js --name myapp
+             pm2 ls'
