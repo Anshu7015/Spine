@@ -51,7 +51,7 @@ jobs:
           set -euo pipefail
           HOST="${EC2_HOST}"
           USER="${EC2_USER}"
-          REPO_DIR="~/Spine"
+          REPO_DIR="/home/ubuntu/Spine"
           BRANCH="dev_Anshu"
 
           if [ -z "$HOST" ] || [ "$HOST" = "server ip" ]; then
@@ -65,7 +65,7 @@ jobs:
             set -e
             echo "Connected to $(hostname)"
 
-            REPO_DIR="~/Spine"
+            REPO_DIR="/home/ubuntu/Spine"
             BRANCH="dev_Anshu"
 
             if [ ! -d ${REPO_DIR} ]; then
