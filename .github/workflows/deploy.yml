@@ -8,9 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install ssh client
@@ -19,19 +18,26 @@ jobs:
       - name: Write private key from secret
         run: |
           mkdir -p /home/runner/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > /home/runner/.ssh/id_rsa
+          # use printf to preserve newlines exactly
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > /home/runner/.ssh/id_rsa
           chmod 600 /home/runner/.ssh/id_rsa
+          ls -l /home/runner/.ssh
 
-      - name: Deploy to server
-        env:
-          HOST: ${{ secrets.EC2_HOST }}
-          USER: ${{ secrets.EC2_USER }}
+      - name: Deploy to server (simple)
         run: |
-          ssh -i /home/runner/.ssh/id_rsa -o StrictHostKeyChecking=no ${USER}@${HOST} "
+          set -euo pipefail
+          HOST="${{ secrets.EC2_HOST }}"
+          USER="${{ secrets.EC2_USER }}"   # or use 'ubuntu' literal if you prefer
+          echo "Deploying to ${USER}@${HOST}"
+          # run ssh with verbose output for debugging
+          ssh -i /home/runner/.ssh/id_rsa -o StrictHostKeyChecking=no -v ${USER}@${HOST} <<'REMOTE'
+            set -e
             cd ~/Spine || exit 1
             git fetch --all --prune
             git reset --hard origin/dev_Anshu
             npm ci
             npm run build || true
             pm2 reload myapp || pm2 start server.js --name myapp
-          "
+            pm2 ls REMOTE
+        
+        continue-on-error: false
