@@ -8,31 +8,30 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install ssh client
         run: sudo apt-get update && sudo apt-get install -y openssh-client
 
-      - name: Write PEM key to file
+      - name: Write private key from secret
         run: |
-          echo "${{ secrets.EC2_SECRETE_KEY }}" > /home/runner/.ssh/id_rsa
+          mkdir -p /home/runner/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > /home/runner/.ssh/id_rsa
           chmod 600 /home/runner/.ssh/id_rsa
 
-      - name: Simple deploy (ssh -> pull, install, reload)
+      - name: Deploy to server
         env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
         run: |
-          echo "Deploying to ${EC2_USER}@${EC2_HOST}"
-          # Use the key we just wrote and skip host key checking for simplicity
-          ssh -i /home/runner/.ssh/id_rsa -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \
-            'set -e
-             cd ~/Spine || exit 1
-             git fetch --all --prune
-             git reset --hard origin/dev_Anshu
-             npm ci
-             npm run build || true
-             pm2 reload myapp || pm2 start server.js --name myapp
-             pm2 ls'
+          ssh -i /home/runner/.ssh/id_rsa -o StrictHostKeyChecking=no ${USER}@${HOST} "
+            cd ~/Spine || exit 1
+            git fetch --all --prune
+            git reset --hard origin/dev_Anshu
+            npm ci
+            npm run build || true
+            pm2 reload myapp || pm2 start server.js --name myapp
+          "
