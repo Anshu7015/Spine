@@ -8,6 +8,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -15,21 +18,30 @@ jobs:
       - name: Install ssh client
         run: sudo apt-get update && sudo apt-get install -y openssh-client
 
-      - name: Debug EC2_HOST
-        run: echo "HOST='${{ secrets.EC2_HOST }}'"
-
       - name: Configure known_hosts
         run: |
+          set -euo pipefail
           mkdir -p /home/runner/.ssh
-          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> /home/runner/.ssh/known_hosts
-          chmod 644 /home/runner/.ssh/known_hosts
+          HOST="${EC2_HOST:-server ip}"
+          if [ -n "$HOST" ] && [ "$HOST" != "server ip" ]; then
+            ssh-keyscan -H "$HOST" >> /home/runner/.ssh/known_hosts
+            chmod 644 /home/runner/.ssh/known_hosts
+          else
+            echo "EC2_HOST is empty; skipping known_hosts setup" >&2
+          fi
 
       - name: Write private key from secret
         env:
           SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
+          set -euo pipefail
           mkdir -p /home/runner/.ssh
           umask 077
+          # Write key exactly as provided, stripping any CR characters
+          if [ -z "$SSH_KEY" ]; then
+            echo "EC2_SSH_KEY secret is missing" >&2
+            exit 1
+          fi
           printf '%s' "$SSH_KEY" | tr -d '\r' > /home/runner/.ssh/id_rsa
           chmod 600 /home/runner/.ssh/id_rsa
           ls -l /home/runner/.ssh
@@ -37,57 +49,74 @@ jobs:
       - name: Deploy to server (robust)
         run: |
           set -euo pipefail
-          HOST="${{ secrets.EC2_HOST }}"
-          USER="${{ secrets.EC2_USER }}"
+          HOST="${EC2_HOST:-server ip}"
+          USER="${EC2_USER:-ubuntu}"
           REPO_DIR="~/Spine"
           BRANCH="dev_Anshu"
+
+          if [ -z "$HOST" ] || [ "$HOST" = "server ip" ]; then
+            echo "EC2_HOST not set. Provide secret EC2_HOST with the server IP." >&2
+            exit 1
+          fi
+          if [ -z "$USER" ]; then
+            USER="ubuntu"
+          fi
+
           echo "Deploying to ${USER}@${HOST}"
 
+          # Use a login shell to ensure environment (nvm) loads; then run commands
           ssh -i /home/runner/.ssh/id_rsa -o StrictHostKeyChecking=yes -v ${USER}@${HOST} "bash -lc '
             set -e
-            echo \"Connected to \$(hostname)\"
+            echo "Connected to $(hostname)"
 
+            # Ensure repo exists
             if [ ! -d ${REPO_DIR} ]; then
-              echo \"Repository directory ${REPO_DIR} not found\" >&2
+              echo "Repository directory ${REPO_DIR} not found" >&2
               exit 1
             fi
 
             cd ${REPO_DIR}
 
+            # Reset repo to remote branch state
             git fetch --all --prune
             git checkout ${BRANCH} || git checkout -b ${BRANCH}
             git reset --hard origin/${BRANCH}
             git clean -fdx
 
-            if [ -s \"$HOME/.nvm/nvm.sh\" ]; then
-              . \"$HOME/.nvm/nvm.sh\"
+            # Load nvm if present and ensure Node is available
+            if [ -s "$HOME/.nvm/nvm.sh" ]; then
+              . "$HOME/.nvm/nvm.sh"
+              # Prefer an LTS Node version
               nvm install --lts >/dev/null 2>&1 || true
               nvm use --lts >/dev/null 2>&1 || true
             fi
 
+            # Fall back to system node check
             if ! command -v node >/dev/null 2>&1; then
-              echo \"Node.js not found on server. Please install Node.js (LTS).\" >&2
+              echo "Node.js not found on server. Please install Node.js (LTS) and retry." >&2
               exit 1
             fi
 
+            # Install pm2 if missing
             if ! command -v pm2 >/dev/null 2>&1; then
               npm install -g pm2
             fi
 
+            # Install deps and build
             npm ci || npm install
             if [ -f package.json ]; then
-              if npm run | grep -q \"build\"; then
+              if npm run | grep -q "build"; then
                 npm run build || true
               fi
             fi
 
-            APP_NAME=\"myapp\"
-            START_SCRIPT=\"server.js\"
-
+            # Start or reload app via PM2
+            APP_NAME="myapp"
+            START_SCRIPT="server.js"
             if [ -f dist/server.js ]; then
-              START_SCRIPT=\"dist/server.js\"
+              START_SCRIPT="dist/server.js"
             elif [ -f build/server.js ]; then
-              START_SCRIPT=\"build/server.js\"
+              START_SCRIPT="build/server.js"
             fi
 
             if pm2 describe ${APP_NAME} >/dev/null 2>&1; then
@@ -95,7 +124,6 @@ jobs:
             else
               pm2 start ${START_SCRIPT} --name ${APP_NAME}
             fi
-
             pm2 save || true
             pm2 ls
           '"
