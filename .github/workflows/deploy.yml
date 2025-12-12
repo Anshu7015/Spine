@@ -9,8 +9,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      EC2_HOST: ${{ secrets.EC2_HOST }}
-      EC2_USER: ${{ secrets.EC2_USER }}
+      # Prefer secrets, then repo/environment variables, then defaults
+      EC2_HOST: ${{ secrets.EC2_HOST != '' && secrets.EC2_HOST || vars.EC2_HOST != '' && vars.EC2_HOST || 'server ip' }}
+      EC2_USER: ${{ secrets.EC2_USER != '' && secrets.EC2_USER || vars.EC2_USER != '' && vars.EC2_USER || 'ubuntu' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,12 +23,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /home/runner/.ssh
-          HOST="${EC2_HOST:-server ip}"
+          HOST="${EC2_HOST}"
           if [ -n "$HOST" ] && [ "$HOST" != "server ip" ]; then
             ssh-keyscan -H "$HOST" >> /home/runner/.ssh/known_hosts
             chmod 644 /home/runner/.ssh/known_hosts
           else
-            echo "EC2_HOST is empty; skipping known_hosts setup" >&2
+            echo "EC2_HOST not set (current: '$HOST'). Skipping known_hosts setup." >&2
           fi
 
       - name: Write private key from secret
@@ -37,7 +38,6 @@ jobs:
           set -euo pipefail
           mkdir -p /home/runner/.ssh
           umask 077
-          # Write key exactly as provided, stripping any CR characters
           if [ -z "$SSH_KEY" ]; then
             echo "EC2_SSH_KEY secret is missing" >&2
             exit 1
@@ -49,23 +49,20 @@ jobs:
       - name: Deploy to server (robust)
         run: |
           set -euo pipefail
-          HOST="${EC2_HOST:-server ip}"
-          USER="${EC2_USER:-ubuntu}"
+          HOST="${EC2_HOST}"
+          USER="${EC2_USER}"
           REPO_DIR="~/Spine"
           BRANCH="dev_Anshu"
 
           if [ -z "$HOST" ] || [ "$HOST" = "server ip" ]; then
-            echo "EC2_HOST not set. Provide secret EC2_HOST with the server IP." >&2
+            echo "EC2_HOST not set. Set secret or variable EC2_HOST to your server IP." >&2
             exit 1
           fi
-          if [ -z "$USER" ]; then
-            USER="ubuntu"
-          fi
 
-          echo "Deploying to ${USER}@${HOST}"
+          echo "Deploying to ${USER:-ubuntu}@${HOST}"
 
           # Use a login shell to ensure environment (nvm) loads; then run commands
-          ssh -i /home/runner/.ssh/id_rsa -o StrictHostKeyChecking=yes -v ${USER}@${HOST} "bash -lc '
+          ssh -i /home/runner/.ssh/id_rsa -o StrictHostKeyChecking=yes -v ${USER:-ubuntu}@${HOST} "bash -lc '
             set -e
             echo "Connected to $(hostname)"
 
