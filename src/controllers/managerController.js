@@ -53,14 +53,5 @@ export const managerApplying = async (req,res) => {
             errorCode : 101
         });
     };
-
-    //2.Manager Login
-
-    try{
-    const {error, value} = 
-            
-    };
-    catch(err){
-        
-    };
+  
 };
