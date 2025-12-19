@@ -52,5 +52,15 @@ export const managerApplying = async (req,res) => {
             message : "Internal Server Error!!",
             errorCode : 101
         });
-    }
+    };
+
+    //2.Manager Login
+
+    try{
+    const {error, value} = 
+            
+    };
+    catch(err){
+        
+    };
 };
