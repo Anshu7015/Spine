@@ -53,5 +53,55 @@ export const managerApplying = async (req,res) => {
             errorCode : 101
         });
     };
-  
-};
+}
+
+/*
+  2. Manager Login (using MID and password)
+  Demo Function, have to change before deployment
+*/
+    export const managerLogin = async(req,res) =>{
+        try {
+        const {error,value} = req.body;
+        if(error){
+            return res.status(400).json({
+                success : false,
+                message : "Invalid Credentials!!"
+            });
+        };
+
+        const{MID, password} = value;
+
+        const manager = await Manager.findOne({MID});
+        if (!manager) {
+            return res.status(400).json({
+                success : false,
+                message : "can't find manager, enter valid Manager ID"
+            });
+        };
+        
+        const isMatch = await Manager.findOne({password});
+        if (!isMatch) {
+            return res.status(400).json({
+                success : false,
+                message : "Invalid password or MID"
+            });
+         };
+
+         return res.status(200).json({
+            success : true,
+            message : "Loged in successfully",
+                managerName : manager.managerName,
+                MID : manager.MID,
+                sessionActive : manager.sessionActive,
+                gameType : manager.gameType
+         });
+
+      } 
+      catch (error) {
+      return res.status(500).json({
+        success : false,
+        message : "Internal Server Error"
+      });  
+     };
+
+    }; 
