@@ -4,7 +4,7 @@ import { managerApplying, managerLogin } from "../controllers/managerController.
 const router = express.Router();
 
 //Route for manager applying
-router.post("/apply", managerApplying);
-router.post("/login", managerLogin);
+router.post("/freefireApply", managerApplying);
+router.post("/freefireLogin", managerLogin);
 
 export default router;
