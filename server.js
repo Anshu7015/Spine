@@ -23,7 +23,7 @@ app.use("/api/otp", otpRoutes);
 app.use("/api/manager", managerRoutes);
 app.use("/api/ffCard", ffCardRoutes);
 app.use("/api/mlbbCard", mlbbCardRoutes);
-app.use("api/admin", adminRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use("/",(req,res)=>{
  res.send("Server is running successfully!!");
