@@ -1,6 +1,7 @@
 import Admin from "../models/admin.js";
 import Manager from "../models/manager.js";
 import { createAdminValidator } from "../validator/createAdminValidator.js";
+import { managerApproved } from "../services/managerServices.js";
 
 //1. Create Admin(Temporary code block it will be removed once the admin is created!!)
 export const createAdmin = async (req,res) => {
@@ -94,6 +95,48 @@ export const loginAdmin = async (req,res) => {
 };
 
 // 3. Manager authorizing functions
+
+export const managerApproving = async (req,res) => {
+    try {
+        const {error, value} = req.body;
+        if (error) {
+            return res.status(400).json({
+                success : false,
+                message : "Invalid Credentials"
+            });
+        };
+
+        const {email} = value;
+        if (!email) {
+         return res.status(400).json({
+            success : false,
+            message : "email is required!!"
+         })
+        };
+
+        const manager = await Manager.findOne(email);
+        if(!manager){
+            return res.status(400).json({
+              success: false,
+              message: "Invalid email!!",
+            });
+        }
+
+        manager.authorized = true;
+        const {managerId, managerPassword} = managerApproved();
+        
+        manager.MID = managerId;
+        manager.managerPassword = managerPassword;
+        manager.save();
+    
+    } 
+    catch (error) {
+        return res.status(500).json({
+            success : false,
+            message : "Internal Server error!!"
+        })
+    };
+};
 
 // 4. Banning any manager
 

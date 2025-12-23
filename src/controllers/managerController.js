@@ -57,7 +57,6 @@ export const managerApplying = async (req,res) => {
 
 /*
   2. Manager Login (using MID and password)
-  Demo Function, have to change before deployment
 */
     export const managerLogin = async(req,res) =>{
         try {
@@ -69,8 +68,14 @@ export const managerApplying = async (req,res) => {
             });
         };
 
-        const{MID, password} = value;
+        const{MID, managerPassword} = value;
+        if (!MID || !managerPassword) {
+          return res.status(400).json({
+          message: "ManagerID and Password required!!",
+      });
+    };
 
+        //Find manager by MID
         const manager = await Manager.findOne({MID});
         if (!manager) {
             return res.status(400).json({
@@ -78,23 +83,42 @@ export const managerApplying = async (req,res) => {
                 message : "can't find manager, enter valid Manager ID"
             });
         };
-        
-        const isMatch = await Manager.findOne({password});
-        if (!isMatch) {
-            return res.status(400).json({
-                success : false,
-                message : "Invalid password or MID"
-            });
-         };
 
-         return res.status(200).json({
-            success : true,
-            message : "Loged in successfully",
-                managerName : manager.managerName,
-                MID : manager.MID,
-                sessionActive : manager.sessionActive,
-                gameType : manager.gameType
-         });
+    //Compare entered password!!
+    const isMatch = await manager.comparePassword(managerPassword);
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid credentials. Please check your password.",
+      });
+    };
+
+    //Check if manager is banned
+    if (manager.banned === true) {
+        return res.status(404).json({
+            success : false,
+            message : "Your account is banned, reach our support for further process!!"
+        });
+    };
+    
+    const accessToken = await manager.generateAccessToken();
+    const refreshToken = await manager.accessToken();
+
+    manager.accessToken = accessToken;
+    manager.refreshToken = refreshToken;
+
+    await manager.save();
+
+    return res.status(200).json({
+        success : true,
+        message : "Loged in successfully",
+        managerName : manager.managerName,
+        MID : manager.MID,
+        sessionActive : managersessionActive,
+        gameType : manager.gameType,
+        accessToken : manager.accessToken,
+        refreshToken : manager.refreshToken,
+        banned : manager.banned
+    });
 
       } 
       catch (error) {

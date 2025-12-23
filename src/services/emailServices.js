@@ -4,7 +4,6 @@ import transporter from "../config/mailer.js";
 dotenv.config();
 
 
-
 // 🔹 Send OTP Email (Only for registration)
 export async function sendOtpEmail(email, otp) {
   try {

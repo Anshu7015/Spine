@@ -22,9 +22,9 @@ const managerSchema = new mongoose.Schema({
   gameType : {type : String, enum : ["freeFire", "mobileLegends"]},
   authorized : {type: Boolean, default : false},
   banned : {type : Boolean, default : false},
-  //SPINE
+  //SpineManger000
   MID : {type : String,default : null},
-  password : {type : String, default : null},
+  managerPassword : {type : String, default : null},
   accessToken : {type : String},
   refreshToken : {type : String},
   sessionActive : {type : Boolean , default : false},
@@ -33,20 +33,21 @@ const managerSchema = new mongoose.Schema({
 {timestamps : true}
 );
 
-//Password hashing method
-managerSchema.methods.hashPassword = async function (next, managerPassword) {
+
+//Pre-save hook to hash password
+managerSchema.pre("save", async function (next) {
   //If managerPassword is not modified, just skip it don't hash it again.
   if (!this.isModified("managerPassword")) return next();
 
   try {
     const salt = await bcrypt.genSalt(10);
-    this.managerPassword = await bcrypt.hash(managerPassword, salt);
+    this.managerPassword = await bcrypt.hash(this.managerPassword, salt);
     next();
   } catch (error) {
     console.error("Error hashing password:", error);
     next(error);
   }
-};
+});
 
 //Method to compare password(to be implemented with bcrypt).
 //Used for login time.
@@ -55,7 +56,6 @@ managerSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 //JWT (Generate and Refresh Token)
-
 managerSchema.methods.generateAccessToken = async function () {
   try {
     const token = jwt.sign(
@@ -82,4 +82,4 @@ managerSchema.methods.generateRefreshToken = async function () {
   }
 };
 
-export default mongoose.model("Manager",managerSchema);
+export default mongoose.model("ffManager",managerSchema);
