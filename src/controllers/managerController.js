@@ -1,6 +1,5 @@
 import Manager from "../models/manager.js";
 import {createManagerValidator} from "../validator/createManagerValidator.js"
-import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 

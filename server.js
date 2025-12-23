@@ -6,6 +6,7 @@ import otpRoutes from "./src/routes/otpRoute.js";
 import managerRoutes from "./src/routes/managerRoute.js";
 import ffCardRoutes from "./src/routes/ffCardRoutes.js";
 import mlbbCardRoutes from "./src/routes/mlbbCardRoutes.js";
+import adminRoutes from "./src/routes/adminRoute.js";
 
 // Load env variables
 dotenv.config();
@@ -22,6 +23,7 @@ app.use("/api/otp", otpRoutes);
 app.use("/api/manager", managerRoutes);
 app.use("/api/ffCard", ffCardRoutes);
 app.use("/api/mlbbCard", mlbbCardRoutes);
+app.use("api/admin", adminRoutes);
 
 app.use("/",(req,res)=>{
  res.send("Server is running successfully!!");
