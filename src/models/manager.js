@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const managerSchema = new mongoose.Schema({
   managerName: { type: String, min: 3, max: 30, required: true },
@@ -24,7 +26,9 @@ const managerSchema = new mongoose.Schema({
   banned : {type : Boolean, default : false},
   //SpineManger000
   MID : {type : String,default : null},
-  managerPassword : {type : String, default : null},
+  password : {type : String, default : null},
+  passwordChanged : {type : Boolean, default : false},//It helps to check if the manager changed his password or not
+  tempPassExpiresAt : {type : Date, default : null},
   accessToken : {type : String},
   refreshToken : {type : String},
   sessionActive : {type : Boolean , default : false},
@@ -36,12 +40,12 @@ const managerSchema = new mongoose.Schema({
 
 //Pre-save hook to hash password
 managerSchema.pre("save", async function (next) {
-  //If managerPassword is not modified, just skip it don't hash it again.
-  if (!this.isModified("managerPassword")) return next();
+  //If password is not modified, just skip it don't hash it again.
+  if (!this.isModified("password")) return next();
 
   try {
     const salt = await bcrypt.genSalt(10);
-    this.managerPassword = await bcrypt.hash(this.managerPassword, salt);
+    this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error) {
     console.error("Error hashing password:", error);
@@ -52,7 +56,7 @@ managerSchema.pre("save", async function (next) {
 //Method to compare password(to be implemented with bcrypt).
 //Used for login time.
 managerSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.managerPassword);
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 //JWT (Generate and Refresh Token)
@@ -82,4 +86,4 @@ managerSchema.methods.generateRefreshToken = async function () {
   }
 };
 
-export default mongoose.model("ffManager",managerSchema);
+export default mongoose.model("Manager",managerSchema);

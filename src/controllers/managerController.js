@@ -52,25 +52,16 @@ export const managerApplying = async (req,res) => {
             errorCode : 101
         });
     };
-}
+};
 
-/*
-  2. Manager Login (using MID and password)
-*/
+//Session Management feature, I had sessionActive attribute on the DB, I have to turn it true when the user logged in into any device and if he tries to login again on the other device, and he was also logged in into another device so the controller will check the sessionActive, and if it is true he will be seen a popup like you're logged in another device, or he will get a warning like you will be logged out of the previous device , and then we should let the login flow continue, it will refresh the access and refresh token.
+//2. Manager Login (using MID and password)
     export const managerLogin = async(req,res) =>{
         try {
-        const {error,value} = req.body;
-        if(error){
-            return res.status(400).json({
-                success : false,
-                message : "Invalid Credentials!!"
-            });
-        };
-
-        const{MID, managerPassword} = value;
-        if (!MID || !managerPassword) {
+        const{MID, password} = req.body;
+        if (!MID || !password) {
           return res.status(400).json({
-          message: "ManagerID and Password required!!",
+          message: "MID and Password required!!",
       });
     };
 
@@ -83,8 +74,27 @@ export const managerApplying = async (req,res) => {
             });
         };
 
+        //Validate the user is authorized or not
+        if (manager.authorized === false) {
+            return res.status(404).json({
+                success : false,
+                message : "Manager is not authorized!!"
+            })
+        };
+
+        //If the manager haven't changed his password.
+        if (manager.passwordChanged === false) {            
+            //Checks the tempPassword is valid or not
+            if (Date.now() >=manager.tempPassExpiresAt) {
+               return res.status(404).json({
+                success : false,
+                message : "Temporary password is expired, contact admin for further support"
+               })
+            };
+        };
+
     //Compare entered password!!
-    const isMatch = await manager.comparePassword(managerPassword);
+    const isMatch = await manager.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
         message: "Invalid credentials. Please check your password.",
@@ -98,33 +108,101 @@ export const managerApplying = async (req,res) => {
             message : "Your account is banned, reach our support for further process!!"
         });
     };
-    
+
     const accessToken = await manager.generateAccessToken();
-    const refreshToken = await manager.accessToken();
+    const refreshToken = await manager.generateRefreshToken();
 
     manager.accessToken = accessToken;
     manager.refreshToken = refreshToken;
+    manager.sessionActive = true;
 
     await manager.save();
 
-    return res.status(200).json({
-        success : true,
-        message : "Loged in successfully",
-        managerName : manager.managerName,
-        MID : manager.MID,
-        sessionActive : managersessionActive,
-        gameType : manager.gameType,
-        accessToken : manager.accessToken,
-        refreshToken : manager.refreshToken,
-        banned : manager.banned
-    });
+    if (manager.tempPassExpiresAt === null) {        
+        return res.status(200).json({
+            success : true,
+            message : "Loged in successfully",
+            managerName : manager.managerName,
+            MID : manager.MID,
+            sessionActive : managersessionActive,
+            gameType : manager.gameType,
+            accessToken : manager.accessToken,
+            refreshToken : manager.refreshToken,
+            banned : manager.banned
+        });
+    };
 
-      } 
+    if (manager.tempPassExpiresAt) {        
+        return res.status(200).json({
+            success : true,
+            message : "Loged in successfully, please change your temporary password!!",
+            managerName : manager.managerName,
+            MID : manager.MID,
+            sessionActive : manager.sessionActive,
+            gameType : manager.gameType,
+            accessToken : manager.accessToken,
+            refreshToken : manager.refreshToken,
+            banned : manager.banned
+        });
+    };
+
+    } 
       catch (error) {
+        console.log(error);
       return res.status(500).json({
         success : false,
-        message : "Internal Server Error"
+        message : "Internal server error!!"
       });  
      };
+}; 
 
-    }; 
+// 3. Manager Reset password(Temp password change)
+export const managerPasswordReset = async function(req,res){
+    try {
+        const {MID,password,newPassword} = req.body;
+        if ((!MID, !password, !newPassword)) {
+            return res.status(404).json({
+                success : false,
+                message : "Invalid credentials!!"
+            });
+        };
+
+        const manager = await Manager.findOne({MID});
+
+        if (!manager) {
+            return res.status(404).json({
+                success : false,
+                message : "Manager is not found!!"
+            })
+        };
+
+        const isMatch = await manager.comparePassword(password);
+
+        if (!isMatch) {
+            return res.status(401).json({
+              message: "Invalid credentials. Please check your password.",
+            });
+        };
+
+        //Saving new password
+        manager.password = newPassword;
+        manager.passwordChanged = true;
+        manager.tempPassExpiresAt = null;
+        await manager.save();
+
+        return res.status(202).json({
+          success: true,
+          message: "Password Changed successfully!!",
+        });
+        
+    } catch (error) {
+     console.log(error);
+     return res.status(500).json({
+        success : false,
+        message : "Internal Server Error!!"
+     });        
+    }
+
+
+
+};

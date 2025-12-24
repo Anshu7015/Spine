@@ -1,6 +1,6 @@
 import manager from "../models/manager.js";
 
-//This is kind of a helper function, which is used to generate the managerPassword 
+//This is kind of a helper function, which is used to generate the password 
 function generatePassword(options) {
   const { length, uppercase, lowercase, numbers, symbols } = options;
 
@@ -35,17 +35,23 @@ function generatePassword(options) {
 
 
 //1.Manager MID and Password Generating function (When approved by manager!!)
-export async function managerApproved(){
-
-    try {
-       const lastUser = await manager.findOne(
-      {},
+export async function managerApproved() {
+  try {
+    const lastUser = await manager.findOne(
+      { MID: { $exists: true, $ne: null } }, // 👈 CRITICAL FIX
       {},
       { sort: { MID: -1 } }
-    ); //Sort in descending order to get the last MID, -1 means des and 1 means asc
-    const lastId = lastUser ? parseInt(lastUser.MID.replace("SpineManager", "")) : 0;
-    const managerId = `SpineManager${String(lastId + 1).padStart(3, "0")}`;
-    const managerPassword = generatePassword({
+    );
+
+    let lastId = 0;
+
+    if (lastUser?.MID) {
+      lastId = parseInt(lastUser.MID.replace("SpineManager", ""), 10);
+    }
+
+    const MID = `SpineManager${String(lastId + 1).padStart(3, "0")}`;
+
+    const password = generatePassword({
       length: 10,
       uppercase: true,
       lowercase: true,
@@ -53,12 +59,9 @@ export async function managerApproved(){
       symbols: false,
     });
 
-    return {
-      managerId,
-      managerPassword
-    };
-    
+    return { MID, password };
   } catch (error) {
     console.error("Error generating MID:", error);
-  }    
+    throw error; // 👈 NEVER silently fail
+  }
 };

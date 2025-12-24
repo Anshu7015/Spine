@@ -120,9 +120,6 @@ export const loginUser = async (req, res) => {
 
     await user.save();//Saving the JWT tokens.
 
-    
-    
-
     // If already verified
     return res.status(200).json({
       message: "Login successful.",
