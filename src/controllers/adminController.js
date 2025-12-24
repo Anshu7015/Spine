@@ -40,7 +40,8 @@ export const createAdmin = async (req,res) => {
     }
 };
 
-//2. Login Admin (Using email and password)
+//2. Login Admin (Using email and password) 
+//Add OTP and jwtSecret also
 export const loginAdmin = async (req,res) => {
     try {
         const {email , password} = req.body;
@@ -146,12 +147,15 @@ export const managerApproving = async (req,res) => {
 
 // 4. Banning any manager
 
-//5. Banning any admin (firstly the manager raise a query or complain about the admin and then the admin will review if admin found guilty he will be banned)
+//5. Banning any user (firstly the manager raise a query or complain about the admin and then the admin will review if user found guilty he will be banned)
 
-// 6. Manager record (UPI id edit.) also add UPI id attribute to the model
+// 6. Manager record update (UPI id edit.) also add UPI id attribute to the model
+
+
+// 
 
 /*
- 6. Coin features ({
+ 7. Coin features ({
   "packageId": "coins_100",
   "coins": 100,
   "price": 149,

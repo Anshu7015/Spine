@@ -92,3 +92,11 @@ export const getCardsMlbb = async function(req,res){
     }
 
 };
+
+//Mlbb slot creation
+//3. 1v1(team) only
+
+// the app installed first time makes private and public key pair and sends a public key to the server
+// server stores the public key with the user id
+// whenever user will use app and api called it will send signature generated with the private key and jwt token and 
+// server verifies the signature with the stored public key and processes the transaction

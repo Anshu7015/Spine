@@ -87,3 +87,17 @@ managerSchema.methods.generateRefreshToken = async function () {
 };
 
 export default mongoose.model("Manager",managerSchema);
+
+// for now 
+// val json = JSONObject()
+//         json.put("userId", tokenManager.getUserId())
+//         json.put("fcmToken", token)
+//         json.put("platform", "android")
+//         json.put("deviceId", deviceId)
+//         json.put("modelName", modelName)
+
+//       dont do anyrging just catch them and tell me if its working or not 
+//       endpoint -- "fcm/token"
+        
+//just tell me that
+// im gotta  test these things rn 
