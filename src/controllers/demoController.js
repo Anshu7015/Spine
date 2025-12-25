@@ -1,4 +1,3 @@
-
 export const demoFunction = async function(req, res) {
    try {
     const {userId,fcmToken,platform,deviceId,modelName} = req.body;

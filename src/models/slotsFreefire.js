@@ -7,25 +7,25 @@ const slotSchema = new mongoose.Schema(
     gameType: { type: String, required: true },
     manager: { type: mongoose.Types.ObjectId, ref: "Manager" },
 
-    teamA: { type: mongoose.Types.ObjectId, ref: "User" },
+    teamA: { type: mongoose.Types.ObjectId, ref: "TeamFreefire" },
     teamAStatus: {
       type: String,
       default: "pending",
       enum: ["paid", "pending"],
     },
 
-    teamB: { type: mongoose.Types.ObjectId, ref: "User" },
+    teamB: { type: mongoose.Types.ObjectId, ref: "TeamFreefire" },
     teamBStatus: {
       type: String,
       default: "pending",
       enum: ["paid", "pending"],
     },
-    
-    managerAssigned : {type : Boolean , default : false},
+
+    managerAssigned: { type: Boolean, default: false },
     matchStatus: {
       type: String,
       enum: ["pending", "ready", "running", "completed"],
-      default : "pending"
+      default: "pending",
     },
   },
   { timestamps: true }

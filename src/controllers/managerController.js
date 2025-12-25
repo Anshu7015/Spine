@@ -124,7 +124,7 @@ export const managerApplying = async (req,res) => {
             message : "Loged in successfully",
             managerName : manager.managerName,
             MID : manager.MID,
-            sessionActive : managersessionActive,
+            sessionActive : manager.sessionActive,
             gameType : manager.gameType,
             accessToken : manager.accessToken,
             refreshToken : manager.refreshToken,
