@@ -22,7 +22,7 @@ export const cardCreation = async function(req ,res) {
              teamSize,
              totalSquads,
              rounds,
-             prize,
+             price,
              gamePrizeAmount,
              gameType,
              game
@@ -46,7 +46,7 @@ export const cardCreation = async function(req ,res) {
           teamSize,
           totalSquads,
           rounds,
-          prize,
+          price,
           gamePrizeAmount,
           gameType,
           game
