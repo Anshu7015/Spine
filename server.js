@@ -27,6 +27,7 @@ app.use("/api/ffCard", ffCardRoutes);
 app.use("/api/mlbbCard", mlbbCardRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("api/demo",demoRoutes);
+//This route will register the team and slots for FF.
 app.use("/api/ffSlots", ffSlotRoutes);
 
 app.use("/",(req,res)=>{

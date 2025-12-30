@@ -1,7 +1,7 @@
 import Joi from "joi";
 
-export const registerTeamFreeFire = Joi.object({
-  userUID: Joi.string.required(),
+const registerTeamFreeFire = Joi.object({
+  userId: Joi.string().required(),
   phone: Joi.string().trim().min(9).max(11).required(),
   yourUID : Joi.string().trim().min(4).max(11).required(),
   teamName : Joi.string().trim().min(3).required(),
@@ -10,3 +10,5 @@ export const registerTeamFreeFire = Joi.object({
   player3 : Joi.string().required(),
   player4 : Joi.string().required(),
 });
+
+export default registerTeamFreeFire;

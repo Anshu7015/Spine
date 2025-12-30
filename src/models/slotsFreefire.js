@@ -35,7 +35,7 @@ slotSchema.pre("save", async function(next) {
       { sort : {teamId : -1} }
     );
   
-    const lastId = lastMatch ? parseInt(lastMatch.teamId.replace("ffSlot", "")) : 0; 
+    const lastId = lastMatch ? parseInt(lastMatch.teamId.replace("ffSlot","")) : 0; 
     this.teamId = `ffSlot${String(lastId + 1).padStart(3,"0")}`;
     next();
   }

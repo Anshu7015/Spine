@@ -2,9 +2,10 @@
 import Slot from "../models/slotsFreefire.js";
 import Payment from "../models/payment.js";
 import createTeamff from "../validator/createTeamFF.js";
+import teamRegister from "../models/teamFreefire.js";
 import User from "../models/userModel.js"
 
-//Firstly we ask the user the UID and then he will make the payment, We will let him in the slot and wait for his payment,if he don't make payment in 2mins we will erase his record so others can come in the slot.
+//Firstly we ask the user the userId and then he will make the payment, We will let him in the slot and wait for his payment,if he don't make payment in 2mins we will erase his record so others can come in the slot.
 
 //1. User team input for the slot. (If a user only registered and haven't done the payment, his record will get vanished!!)
 
@@ -42,7 +43,7 @@ export const registerTeamForFreeFire = async function (req,res) {
             })
         };
 
-        const newTeam = new Slot({
+        const newTeam = new teamRegister({
             userId : user._id,
             phone,
             yourUID,
@@ -52,8 +53,9 @@ export const registerTeamForFreeFire = async function (req,res) {
             player3,
             player4,
             
+            
         });
-        newTeam.expiresAt = new Date(Date.now() + 2 * 60 * 1000)
+        newTeam.expiresAt = new Date(Date.now() + 10 * 60 * 1000);
         await newTeam.save();
         
         return res.status(202).json({
@@ -78,102 +80,78 @@ export const registerTeamForFreeFire = async function (req,res) {
 //We have to filter the teamId by the userId and we have to check the slot also if the slot is done or ongoing the user cannot register it again.
 
 export const paymentConfirming_SlotMakingForUser = async function (req,res){
-    try {
-        const {teamId,userId, amountPaid, currency, gameType} = req.body;
-
-     if (!userId || !amountPaid || !currency ||  !teamId, !gameType) {
+    const {teamId,userId, amountPaid, currency, gameType} = req.body;
+    if (!userId || !amountPaid || !currency ||  !teamId || !gameType) {
         return res.status(404).json({
             success : false,
             message : "userId, amountPaid, currency,teamId is needed!!"
         });
-     };
+    };
 
-    const user = User.findOne({userId : userId});
+    try {
+    const user = await User.findOne({userId : userId});
     if (!user) {
         return res.status(404).json({
             success : false,
             message : "cannot find user!!"
         })
     };
-    //Payment Slot
+
+    //Payment Slot creation
     const newPayment = new Payment ({
-        UID : userId._id,
+        userId : user._id,
         amountPaid : amountPaid,
         currency : currency,
     });
-    await newPayment.save();
+    // await newPayment.save();
 
     //Assigning user to the slot!!
-          try {
-            const newSlot = await Slot.findOne({
-              matchStatus: "pending",
-              teamA: { $ne: null }, //notEquals
-              teamB: { $eq: null }, //Equals
-            });
-
-            if (newSlot) {
-              try {
-                newSlot.teamB = teamId._id;
-                await newSlot.save();
-                newPayment.slotID = newSlot._id;
-                await newPayment.save();
-                return res.status(202).json({
-                  success: true,
-                  message: "This user is registered to the slot, in TeamB",
-                  slotData: newSlot,
-                });
-              } catch (error) {
-                console.log(error);
-                return res.status(404).json({
-                  success: false,
-                  message: "Error registering user to teamB!!",
-                });
-              }
+    const newSlot = await Slot.findOneAndUpdate({
+        matchStatus: "pending",
+        teamA: { $ne: null }, //notEquals
+        teamB: { $eq: null }, //Equals
+        },
+        {
+            $set : {
+                teamB : teamId._id,
             }
+        },
+        {new : true} //return the updated document
+    );
 
-            if (!newSlot) {
-              try {
-                const generateSlot = new Slot({
-                    gameType : "ff",
-                    teamA : teamId._id,
-                });
-                await generateSlot.save();
-                newPayment.slotID = generateSlot._id;
-                await newPayment.save();
+        if (newSlot) {
+            newPayment.slotID = newSlot._id;
+            await newPayment.save();
 
-                // return res.status(202).json({
-                //     success : false,
-                //     message : "This user is registered to the slot, in teamA"
-                // })
-              } catch (error) {
-                console.log(error);
-                return res.status(404).json({
-                  success: false,
-                  message: "Error Registering User to teamA!!",
-                });
-              }
-            }
-          } catch (error) {
-            console.log(error);
-            return res.status(500).json({
-              success: false,
-              message: "Internal Server Error!!",
+            return res.status(202).json({
+                success: true,
+                message: "This user is registered to the slot, in TeamB",
+                slotData: newSlot,
             });
-          }        
+        };
+        if (!newSlot) {
+            const generateSlot = new Slot({
+                gameType : "ff",
+                teamA : teamId._id,
+            });
+            await generateSlot.save();
 
+            newPayment.slotID = generateSlot._id;
+            await newPayment.save();
 
-    // return res.status(200).json({
-    //     success : true,
-    //     message : "paymentModel created!!"
-    // });   
-
-}     
-      catch (error){
-      console.log(error);
-      return res.status(500).json({
-      success : false,
-      message : "Internal Server Error!!"
-      });  
+            return res.status(202).json({
+              success: true,
+              message: "This user is registered to the slot, in TeamA",
+              slotData: generateSlot,
+            });
+        };
+    }
+    catch (error){
+    console.log(error);
+    return res.status(500).json({
+    success : false,
+    message : "Internal Server Error!!"
+    });  
     };
 };
 
