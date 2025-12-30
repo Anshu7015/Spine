@@ -4,6 +4,8 @@ import Payment from "../models/payment.js";
 import createTeamff from "../validator/createTeamFF.js";
 import teamRegister from "../models/teamFreefire.js";
 import User from "../models/userModel.js"
+import teamFreefire from "../models/teamFreefire.js";
+import Manager from "../models/manager.js";
 
 //Firstly we ask the user the userId and then he will make the payment, We will let him in the slot and wait for his payment,if he don't make payment in 2mins we will erase his record so others can come in the slot.
 
@@ -79,6 +81,7 @@ export const registerTeamForFreeFire = async function (req,res) {
 //Slot Alotment = When the user had done the payment, we have to alot them slots, the slots are aloted to the user like if any slot needs any team they will be transfered to that slot, if all slots are full, create one and then add others
 //We have to filter the teamId by the userId and we have to check the slot also if the slot is done or ongoing the user cannot register it again.
 
+
 export const paymentConfirming_SlotMakingForUser = async function (req,res){
     const {teamId,userId, amountPaid, currency, gameType} = req.body;
     if (!userId || !amountPaid || !currency ||  !teamId || !gameType) {
@@ -96,6 +99,7 @@ export const paymentConfirming_SlotMakingForUser = async function (req,res){
             message : "cannot find user!!"
         })
     };
+    const team = await teamFreefire.findOne({teamId : teamId});
 
     //Payment Slot creation
     const newPayment = new Payment ({
@@ -113,7 +117,7 @@ export const paymentConfirming_SlotMakingForUser = async function (req,res){
         },
         {
             $set : {
-                teamB : teamId._id,
+                teamB : team._id,
             }
         },
         {new : true} //return the updated document
@@ -122,6 +126,13 @@ export const paymentConfirming_SlotMakingForUser = async function (req,res){
         if (newSlot) {
             newPayment.slotID = newSlot._id;
             await newPayment.save();
+            team.expiresAt = null;
+            team.paymentSuccess = true;
+            await team.save();  
+
+            await teamFreefire.findOneAndUpdate({
+                paymentSuccess : true,
+            });
 
             return res.status(202).json({
                 success: true,
@@ -132,12 +143,19 @@ export const paymentConfirming_SlotMakingForUser = async function (req,res){
         if (!newSlot) {
             const generateSlot = new Slot({
                 gameType : "ff",
-                teamA : teamId._id,
+                teamA : team._id,
             });
             await generateSlot.save();
 
             newPayment.slotID = generateSlot._id;
+            team.expiresAt = null;
+            team.paymentSuccess = true;
+            await team.save();
+
             await newPayment.save();
+            await teamFreefire.findOneAndUpdate({
+                paymentSuccess : true,
+            })
 
             return res.status(202).json({
               success: true,
@@ -185,18 +203,25 @@ export const managerSlotShowing = async function (req,res){
 
 //5. Assigning manager to the available slots
 export const managerSlotAssigning = async function (req,res) {
-  try {
-
     const {slotId, managerId, roomId,roomPassword} = req.body;
-    if(!slotId || !managerId || !roomPassword ||!roomId) return res.status(404).json({
+    if(!slotId || !managerId ||  !roomPassword || !roomId) return res.status(404).json({
         success : false,
         message : "slotId , managerId , roomPassword, roomId is needed!!"
     });
 
+    try {
     const slot = await Slot.findOne({
         slotId : slotId,
         manager : {$eq : null}
     });
+
+    const manager = await Manager.findOne({MID : managerId});
+    if (!manager) {
+        return res.status(404).json({
+            success : false,
+            message : "Cannot find manager!!"
+        });
+    };
 
     if (!slot) {
         return res.status(404).json({
@@ -205,10 +230,13 @@ export const managerSlotAssigning = async function (req,res) {
         })
     };
 
-    slot.manager = managerId._id;
+    slot.manager = manager._id;
     slot.roomId = roomId;
     slot.roomPassword = roomPassword; 
-    slot.matchStatus = "ready";   
+    
+    if (slot.teamA != null && slot.teamB != null) {        
+        slot.matchStatus = "ready";   
+    }
     await slot.save();
 
     return res.status(202).json({

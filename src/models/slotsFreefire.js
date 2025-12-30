@@ -2,15 +2,15 @@ import mongoose from "mongoose";
 
 const slotSchema = new mongoose.Schema(
   {
-    slotId : {type : String,unique : true},
-    roomId: { type: String },
-    roomPassword: { type: String },
+    slotId : {type : String,unique : true , default : null},
+    roomId: { type: String , default : null },
+    roomPassword: { type: String  , default : null},
     gameType: { type: String, required: true },
-    manager: { type: mongoose.Types.ObjectId, ref: "Manager" },
+    manager: { type: mongoose.Types.ObjectId, ref: "Manager", default : null },
 
-    teamA: { type: mongoose.Types.ObjectId, ref: "TeamFreefire" },
+    teamA: { type: mongoose.Types.ObjectId, ref: "TeamFreefire"  , default : null},
     
-    teamB: { type: mongoose.Types.ObjectId, ref: "TeamFreefire" },
+    teamB: { type: mongoose.Types.ObjectId, ref: "TeamFreefire"  , default : null},
     
     matchStatus: {
       type: String,
