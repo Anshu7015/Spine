@@ -4,7 +4,7 @@ const paymentSchema = new mongoose.Schema({
   slotID : {type : mongoose.Types.ObjectId, ref : "Slot"},
   UID: { type: mongoose.Types.ObjectId, ref: "User", required: true },
   amountPaid: { type: Number, required: true },
-  status : {type : String , enum : ["pending", "paid"], default : "pending"},
+  currency : {type : String,required : true},
 },
 {timestamps : true}
 );
