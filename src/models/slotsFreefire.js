@@ -26,22 +26,20 @@ const slotSchema = new mongoose.Schema(
 slotSchema.pre("save", async function(next) {
   //If doc already exists, skik it
   if (!this.isNew) return next();
-
   try {
-
     const lastMatch = await this.constructor.findOne(
       {},
       {},
-      { sort : {teamId : -1} }
+      { sort : {slotId : -1} }
     );
   
-    const lastId = lastMatch ? parseInt(lastMatch.teamId.replace("ffSlot","")) : 0; 
-    this.teamId = `ffSlot${String(lastId + 1).padStart(3,"0")}`;
+    const lastId = lastMatch ? parseInt(lastMatch.slotId.replace("ffSlot","")) : 0; 
+    this.slotId = `ffSlot${String(lastId + 1).padStart(3,"0")}`;
     next();
   }
   catch (error) {
     console.log(error);
-    console.error("Error generating teamId");
+    console.error("Error generating slotId");
     next(error);
   };
 
