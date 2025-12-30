@@ -8,4 +8,4 @@ router.post("/paymentConfirmingAndSlotAssigningToUser",paymentConfirming_SlotMak
 router.post("/availableSlotsManager",managerSlotShowing);
 router.post("/AssignManager",managerSlotAssigning);
 
-export default router;
+export default router;  
