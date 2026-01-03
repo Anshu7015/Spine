@@ -2,10 +2,11 @@ import mongoose from "mongoose";
 
 const slotSchema = new mongoose.Schema(
   {
+    game : {type : String, default : "ff", enum : ["ff"]},
     slotId : {type : String,unique : true , default : null},
     roomId: { type: String , default : null },
     roomPassword: { type: String  , default : null},
-    gameType: { type: String, required: true },
+    gameType: { type: String, required: true }, //BR, CS
     manager: { type: mongoose.Types.ObjectId, ref: "Manager", default : null },
 
     teamA: { type: mongoose.Types.ObjectId, ref: "TeamFreefire"  , default : null},

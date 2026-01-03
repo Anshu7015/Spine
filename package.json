@@ -25,6 +25,7 @@
     "cron": "^4.3.4",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "googleapis": "^169.0.0",
     "joi": "^18.0.1",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^7.0.0",

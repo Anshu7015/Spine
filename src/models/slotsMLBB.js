@@ -1,0 +1,1 @@
+// Have to define a default game : "ff"

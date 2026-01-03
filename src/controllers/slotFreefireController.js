@@ -44,7 +44,8 @@ export const registerTeamForFreeFire = async function (req,res) {
                 message : "Cannot find the user, Invalid UserID!!"
             })
         };
-
+        //I have to check if the user is having a slot enrolled currently, if enrolled return and show him the message that you're enrolled into a slot.
+        
         const newTeam = new teamRegister({
             userId : user._id,
             phone,
@@ -81,7 +82,7 @@ export const registerTeamForFreeFire = async function (req,res) {
 //Slot Alotment = When the user had done the payment, we have to alot them slots, the slots are aloted to the user like if any slot needs any team they will be transfered to that slot, if all slots are full, create one and then add others
 //We have to filter the teamId by the userId and we have to check the slot also if the slot is done or ongoing the user cannot register it again.
 
-
+//Note :- We will also need the cardId to match that the user is paying for the right slot.
 export const paymentConfirming_SlotMakingForUser = async function (req,res){
     const {teamId,userId, amountPaid, currency, gameType} = req.body;
     if (!userId || !amountPaid || !currency ||  !teamId || !gameType) {
